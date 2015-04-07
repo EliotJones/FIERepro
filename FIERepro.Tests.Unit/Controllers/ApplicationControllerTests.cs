@@ -8,12 +8,13 @@
 
     public class ApplicationControllerTests
     {
-        private ContextFactory contextFactory = new ContextFactory();
+        private ContextFactory contextFactory = null;
 
         private IQueryBus GetQueryBus()
         {
             return A.Fake<IQueryBus>();
         }
+
 
         [Fact]
         public void Start_NullIdentity_RedirectsToIndex()
@@ -22,17 +23,22 @@
             A.CallTo(() => queryBus.Query(A<ApplicationAllowed>.Ignored)).Returns(false);
 
             var controller = new ApplicationController(queryBus);
-
-            var context = A.Fake<HttpContextBase>();
-            A.CallTo(() => context.User.Identity).Returns(null);
-            var controllerContext = A.Fake<ControllerContext>();
-            A.CallTo(() => controllerContext.HttpContext).Returns(context);
-
-            controller.ControllerContext = controllerContext;
+            
+            controller.ControllerContext = GetContextWithNullUser();
 
             var result = controller.Start() as RedirectToRouteResult;
 
             Assert.Equal("Index", result.RouteValues["action"]);
+        }
+
+        private ControllerContext GetContextWithNullUser()
+        {
+             var context = A.Fake<HttpContextBase>();
+            A.CallTo(() => context.User.Identity).Returns(null);
+            var controllerContext = A.Fake<ControllerContext>();
+            A.CallTo(() => controllerContext.HttpContext).Returns(context);
+
+            return controllerContext;
         }
     }
 }
